@@ -3,7 +3,7 @@ import pandas as pd
 import math
 
 
-# calculates the cost for laying the network.
+# calculates the cost for laying the network.aaa
 def calculate_laying_cost(links, links_location):
     total_cost = 0
     for link in links:
