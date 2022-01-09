@@ -206,7 +206,7 @@ def SZFB(nodes, links, g, traffic, seismicRegions):
 
 
 #
-def newAlgorithm(nodes, links, g, traffic, regions, number_of_total_links_acceptable):
+def newAlgorithm(nodes, links, g, traffic, regions, number_of_total_links_acceptable, links_location):
     notCriticalLinks = []
     for link in links:
         if not isThisLinkCritical(nodes, [link], regions, g):
@@ -231,4 +231,8 @@ def newAlgorithm(nodes, links, g, traffic, regions, number_of_total_links_accept
     # min_power = IP_SB(nodes, new_links(min_combination, links), new_g(min_combination, g), traffic)
     min_power = EAFFB(nodes, new_links(min_combination, links), new_g(min_combination, g), traffic, regions)
 
-    return notCriticalLinks, combinations, min_combination, min_power
+    laying_cost = calculate_laying_cost(new_links(min_combination, links), links_location)
+
+    return notCriticalLinks, combinations, min_combination, min_power, laying_cost
+
+

@@ -4,6 +4,44 @@ from functions import createTrafficMatrix, checksIfTheNetworkIsNotCutOff, new_g,
 from algorithms import IP_SB, EAFFB, SZFB, newAlgorithm
 import itertools
 
+
+links_location = {
+    "236": "land",
+    "147": "land",
+    "73": "land",
+    "51": "land",
+    "62": "land",
+    "153": "sea",
+    "157": "sea",
+    "0111": "sea",
+    "160": "sea",
+    "130": "sea",
+    "182": "sea",
+    "270": "sea",
+    "341": "sea",
+    "251": "sea",
+    "60": "land",
+    "45": "land",
+    "279": "sea",
+    "70": "land",
+    "69": "land",
+    "63": "land",
+    "125": "land",
+    "54": "land",
+    "111": "land",
+    "31": "sea",
+    "110": "land",
+    "57": "land",
+    "109": "land",
+    "99": "land",
+    "00105": "sea",
+    "00134": "land",
+    "00237": "sea",
+    "00143": "land",
+    "00229": "sea",
+    "00212": "sea"
+}
+
 nodes = ['ATH', 'LAR', 'THE', 'SER', 'DRA', 'XAN', 'LIM', 'MIT', 'CHI', 'SYR', 'SAM', 'RHO', 'HER', 'RET', 'CHA',
          'KOZ', 'IOA', 'LOU', 'MES', 'PAT', 'LEH', 'KAL', 'TRI', 'COR']
 
@@ -137,6 +175,6 @@ print(aaa + ['aa'])
 traffic = createTrafficMatrix(nodes, 120)
 # print(IP_SB(nodes, new_links(['00105', '00134', '00237', '00143', '00229', '00212'], nea_links), new_g(['00105', '00134', '00237', '00143', '00229', '00212'], nea_g), traffic))
 print(EAFFB(nodes, new_links(['00105', '00134', '00237', '00143', '00229', '00212'], nea_links), new_g(['00105', '00134', '00237', '00143', '00229', '00212'], nea_g), traffic, nea_regionLinks))
-print(new_newAlgorithm(nodes, nea_links, nea_g, traffic, nea_regionLinks, 28))
+print(newAlgorithm(nodes, nea_links, nea_g, traffic, nea_regionLinks, 28, links_location))
 
 
