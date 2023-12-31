@@ -3,19 +3,21 @@ import pandas as pd
 import math
 
 
-# calculates the cost for laying the network.
+# Calculates the cost for laying the networks fiber links.
 def calculate_laying_cost(links, links_location):
     total_cost = 0
+    cost_per_km_land = 43452
+    cost_per_km_sea = 90000
     for link in links:
         if links_location[link] == 'land':
-            total_cost += int(link) * 43452
+            total_cost += int(link) * cost_per_km_land
         else:
-            total_cost += int(link) * 90000
+            total_cost += int(link) * cost_per_km_sea
 
     return total_cost
 
 
-# checks if the path contains the link.
+# Checks if the path contains the given link.
 def contain(path, link):
     for i in path:
         if link == i:
@@ -23,7 +25,7 @@ def contain(path, link):
     return False
 
 
-# finds all the requests using this link from the shortest paths.
+# Finds all the requests using this link from the shortest paths.
 def findAllRequestsUsingThisLink(shortestPaths, link):
     requestsUsingThisLink = []
     for path in shortestPaths:
@@ -32,7 +34,7 @@ def findAllRequestsUsingThisLink(shortestPaths, link):
     return requestsUsingThisLink
 
 
-# finds the broken paths
+# Finds the broken paths
 def brokenPaths(requestsUsingThisLink):
     requests = []
     for paths in requestsUsingThisLink:
@@ -41,15 +43,15 @@ def brokenPaths(requestsUsingThisLink):
     return requests
 
 
-# checks if link is included on the discarded links.
-def equalTo(link, discardedLinks):
-    for discardedLink in discardedLinks:
+# Checks if the given link is included on the given array of links.
+def equalTo(link, links):
+    for discardedLink in links:
         if link == discardedLink:
             return True
     return False
 
 
-# creates a new g without the discarded links.
+# Creates a new g array, without the discarded links.
 def new_g(discardedLinks, g):
     newG = []
     # print(newG)
@@ -61,7 +63,7 @@ def new_g(discardedLinks, g):
     return newG
 
 
-# creates a new links without the discarded links.
+# Creates a new links array, without the discarded links.
 def new_links(discardedLinks, links):
     newLinks = []
     for link in links:
@@ -71,18 +73,91 @@ def new_links(discardedLinks, links):
     return newLinks
 
 
-# creates the traffic matrix.
+# Creates the traffic matrix.
 def createTrafficMatrix(nodes, x):
     traffic = {}
     for i in nodes:
         for j in nodes:
-            if i != j:
-                traffic[i + j] = random.randint(10, 2 * x - 10)
+            traffic[i + j] = random.randint(10, 2 * x - 10)
 
     return traffic
 
 
-# creates the Cij matrix.
+def return_critical_regions(regions, lowerThresholdValue):
+    Mx = 5
+    T = 5
+    t_study = 58
+    xR, yR, n, tesssst = create_x_y_forEveryRegion(len(regions))
+
+    out = []
+    for i in range(len(regions)):
+        # Calculating the values of, D, at and b.
+        sum_x = 0
+        sum_y = 0
+        sum_xy = 0
+        sum_x_pow_of_2 = 0
+        for j in range(len(xR[i])):
+            sum_x += xR[i][j]
+            sum_y += yR[i][j]
+            sum_xy += xR[i][j] * yR[i][j]
+            sum_x_pow_of_2 += xR[i][j] * xR[i][j]
+
+        N = len(xR[i])
+        D = N * sum_x_pow_of_2 - (sum_x * sum_x)
+        b = (N * sum_xy - sum_x * sum_y) / D
+        at = (sum_x_pow_of_2 * sum_y - sum_x * sum_xy) / D
+
+        # Calculating the values of, a, tmx and pt.
+        a = at - math.log(t_study, 10)
+        tmx = math.pow(10, -b * Mx) / math.pow(10, a)
+        pt = 1 - math.pow(math.e, -T / tmx)
+
+        if pt >= lowerThresholdValue:
+            out.append(regions[i])
+
+    return out
+
+
+def calculate_energy_consumption(traffic, shortestPaths, nodes):
+    num_rooters = 0
+    num_tran = 0
+    num_edfa = 0
+    for path in shortestPaths:
+        i = path[0][0]
+        j = path[0][len(path[0]) - 1]
+        c_ij = int((traffic[i + j] / 40) + 0.999999)
+        f_nm = int((c_ij / 80) + 0.999999)
+        num_rooters_for_the_path = int((c_ij + (traffic[i + j] / 40)) + 0.999999)
+        num_tran_for_the_path = int((c_ij * (len(path[1]))) + 0.999999)
+        sum_Lmn = 0
+        for link in path[1]:
+            sum_Lmn += int(link)
+        num_edfa_for_the_path = int((f_nm * ((2*len(path[1])) + (sum_Lmn / 80 - 1))) + 0.999999)
+        num_rooters += num_rooters_for_the_path
+        num_tran += num_tran_for_the_path
+        num_edfa += num_edfa_for_the_path
+
+    #for i in nodes:
+     #   num_rooters += (traffic[i + i] / 40)
+
+    eRouter = 1000 * num_rooters
+    eTran = 73 * num_tran
+    eEdfa = 8 * num_edfa
+    eTotal = eRouter + eTran + eEdfa
+
+    # print("num_edfa = " + str(num_edfa))
+    #print("For energy")
+    #print("eRouter = " + str(eRouter/1000))
+    #print("eTran = " + str(eTran/1000))
+    #print("eEdfa = " + str(eEdfa/1000))
+    #print("eRouter% = " + str(eRouter / eTotal))
+    #print("eTran% = " + str(eTran / eTotal))
+    #print("eEdfa% = " + str(eEdfa / eTotal))
+
+    return eTotal
+
+
+# Creates the Cij matrix.
 def create_Cij(traffic):
     c_ij = {}
     for i in traffic.keys():
@@ -91,7 +166,43 @@ def create_Cij(traffic):
     return c_ij
 
 
-# creates the Wij matrix.
+# Creates the Cij matrix.
+def create_Cij_new(traffic, shortestPaths, nodes):
+    c_ij = {}
+    for i in nodes:
+        for j in nodes:
+            if i != j:
+                c_ij[i + j] = 0
+    for path in shortestPaths:
+        i = path[0][0]
+        j = path[0][len(path[0])-1]
+        c_ij[i + j] += int((traffic[i + j] / 40) + 0.999999)
+
+    return c_ij
+
+
+# just for testing
+def create_Wmn_Lmn_new(shortestPaths, c_ij, nodes):
+    w_mn = {}
+    l_mn = {}
+
+    for i in nodes:
+        for j in nodes:
+            if i != j:
+                w_mn[i + j] = 0
+
+    for path in shortestPaths:
+        print(path)
+
+        for i in range(1, len(path[0])):
+            print(path[0][i - 1] + path[0][i])
+            l_mn[path[0][i - 1] + path[0][i]] = path[1][i - 1]
+            w_mn[path[0][i - 1] + path[0][i]] += c_ij[path[0][0] + path[0][len(path[0]) - 1]]
+
+    return w_mn, l_mn
+
+
+# Creates the Wij matrix.
 def create_Wij(shortestPaths, c_ij):
     w_ij = {}
     for path in shortestPaths:
@@ -105,7 +216,42 @@ def create_Wij(shortestPaths, c_ij):
     return w_ij
 
 
-# creates the fmn matrix.
+# Creates the Wmn matrix.
+def create_Wmn(shortestPaths, c_ij, links):
+    w_mn = {}
+    for link in links:
+        w_mn[link] = 0
+
+    for path in shortestPaths:
+        for link in path[1]:
+            w_mn[link] += c_ij[path[0][0] + path[0][len(path[0]) - 1]]
+
+    return w_mn
+
+
+# just for testing
+def create_Wij_Aij(shortestPaths, c_ij):
+    w_ij = {}
+    a_ij = {}
+    for path in shortestPaths:
+        if len(path[0]) == 2:
+            a_ij[path[0][0] + path[0][1]] = path[1][0]
+            if path[0][0] + path[0][1] in w_ij:
+                w_ij[path[0][0] + path[0][1]] += c_ij[path[0][0] + path[0][1]]
+            else:
+                w_ij[path[0][0] + path[0][1]] = c_ij[path[0][0] + path[0][1]]
+
+        for i in range(1, len(path[0]) - 1):
+            a_ij[path[0][i - 1] + path[0][i]] = path[1][i - 1]
+            if path[0][i - 1] + path[0][i] in w_ij:
+                w_ij[path[0][i - 1] + path[0][i]] += c_ij[path[0][0] + path[0][len(path[0]) - 1]]
+            else:
+                w_ij[path[0][i - 1] + path[0][i]] = c_ij[path[0][0] + path[0][len(path[0]) - 1]]
+
+    return w_ij, a_ij
+
+
+# Creates the fmn matrix.
 def create_fmn(w_ij, links):
     f_mn = {}
     for link in links:
@@ -114,7 +260,16 @@ def create_fmn(w_ij, links):
     return f_mn
 
 
-# finds direct links with nodes
+# just for testing
+def create_fmn2(w_ij):
+    f_mn = {}
+    for i in w_ij.keys():
+        f_mn[i] = int((w_ij[i] / 80) + 0.999999)
+
+    return f_mn
+
+
+# Finds the direct links that connect a node with neighboring nodes, and return the links and the neighboring nodes.
 def directLinkWith(start, g):
     directLinks = [[]]
     startLinks = []
@@ -131,7 +286,7 @@ def directLinkWith(start, g):
     return directLinks
 
 
-# bfs algorithm for shorter path
+# Bfs algorithm for finding the shorter path between two nodes.
 def bfs(start, end, g):
     shortestPath = []
     explored = [[]]
@@ -158,6 +313,7 @@ def bfs(start, end, g):
     return False
 
 
+# Calculates and create the x and y arrays for every region, after loading the data.
 def create_x_y_forEveryRegion(numberOfRegions):
     xRegions = []
     yRegions = []
@@ -165,8 +321,8 @@ def create_x_y_forEveryRegion(numberOfRegions):
     test2 = []
     for i in range(1, numberOfRegions + 1):
         # print(i)
-        df = pd.read_csv(str(i) + ".csv", header=0)
-        earthquakes = df.loc[df['Magnitude (ML)'] > 4.0]
+        df = pd.read_csv("regions_data/" + str(i) + ".csv", header=0)
+        earthquakes = df.loc[df['Magnitude (ML)'] >= 4.0]
         earthquakes = earthquakes['Magnitude (ML)'].values
         d = {}
         for j in earthquakes:
@@ -211,6 +367,7 @@ def sum3(x, y, z):
     return s
 
 
+# Checks if the network is not cut off.
 def checksIfTheNetworkIsNotCutOff(nodes, g):
     for i in nodes:
         for j in nodes[nodes.index(i):]:
@@ -221,6 +378,7 @@ def checksIfTheNetworkIsNotCutOff(nodes, g):
     return True
 
 
+# Checks if the network is not cut off, for the EAFFB algorithm.
 def checksIfTheNetworkIsNotCutOff_EAFFB(nodes, g, regions):
     for region in regions:
         if not checksIfTheNetworkIsNotCutOff(nodes, new_g(region, g)):
@@ -229,6 +387,7 @@ def checksIfTheNetworkIsNotCutOff_EAFFB(nodes, g, regions):
     return True
 
 
+# Removes given links from a given array of links.
 def newDiscardedLinks(discardedlinks, linkToRemove):
     links = []
     for link in discardedlinks:
@@ -238,6 +397,7 @@ def newDiscardedLinks(discardedlinks, linkToRemove):
     return links
 
 
+# Finds the link that can keep the network not cut off.
 def findTheLinkForKeepingTheNetworkNotCutOff(nodes, discardedLinks, g):
     for link in discardedLinks:
         if checksIfTheNetworkIsNotCutOff(nodes, new_g(newDiscardedLinks(discardedLinks, link), g)):
@@ -256,10 +416,10 @@ def isThisLinkCritical(nodes, link, regions, g):
     return False
 
 
+# Checks if a link is on the array of min_combination links.
 def is_this_link_in_min_combination(link_checked, min_combination):
     for link in min_combination:
         if link_checked == link:
             return True
 
     return False
-
