@@ -134,7 +134,7 @@ def EAFFB(nodes, links, g, traffic, regions, lowerThresholdValue):
             if i != j:
                 path = bfs(i, j, g)
                 if not path:
-                    return False
+                    return False, 0, 0, 0
                 shortestPaths.append(path)
 
     xR, yR, n, tesssst = create_x_y_forEveryRegion(len(regions))
@@ -173,7 +173,7 @@ def EAFFB(nodes, links, g, traffic, regions, lowerThresholdValue):
                 for path in brokenPaths(findAllRequestsUsingThisLink(shortestPaths, link)):
                     new_path = bfs(path[0], path[1], new_g(regions[i], g))
                     if not new_path:
-                        return False
+                        return False, 0, 0, 0
 
                     new_shortestPaths.append(new_path)
 
@@ -184,8 +184,8 @@ def EAFFB(nodes, links, g, traffic, regions, lowerThresholdValue):
     for path in shortestPaths:
         total_hops += len(path[1])
 
-    eTotal = calculate_energy_consumption(traffic, shortestPaths, nodes)
-    return eTotal
+    eTotal, num_rooters, num_tran, num_edfa = calculate_energy_consumption(traffic, shortestPaths, nodes)
+    return eTotal, num_rooters, num_tran, num_edfa
 
 
 def SZFB(nodes, links, g, traffic, seismicRegions):
@@ -226,7 +226,8 @@ def proposedAlgorithm(nodes, links, g, traffic, regions, lowerThresholdValue):
 
     new_critical_links = []
     for link in critical_links:
-        if EAFFB(nodes, new_links([link], links), new_g([link], g), traffic, regions, lowerThresholdValue) > 0:
+        result_1, dummy_num_rooters, dummy_num_tran, dummy_num_edfa = EAFFB(nodes, new_links([link], links), new_g([link], g), traffic, regions, lowerThresholdValue)
+        if result_1 > 0:
             new_critical_links.append(link)
 
     critical_links = new_critical_links
@@ -240,13 +241,13 @@ def proposedAlgorithm(nodes, links, g, traffic, regions, lowerThresholdValue):
     powers = []
     powers_dict = {}
     for combination in combinations:
-        result = EAFFB(nodes, new_links(combination, links), new_g(combination, g), traffic, regions, lowerThresholdValue)
+        result, dummy_num_rooters, dummy_num_tran, dummy_num_edfa = EAFFB(nodes, new_links(combination, links), new_g(combination, g), traffic, regions, lowerThresholdValue)
         if result > 0:
             powers.append(result)
             powers_dict[result] = combination
 
     powers.sort()
-    result = EAFFB(nodes, new_links(powers_dict[powers[0]], links), new_g(powers_dict[powers[0]], g), traffic, regions, lowerThresholdValue)
-    original_power = EAFFB(nodes, links, g, traffic, regions, lowerThresholdValue)
-    return result, original_power
+    result, num_rooters, num_tran, num_edfa = EAFFB(nodes, new_links(powers_dict[powers[0]], links), new_g(powers_dict[powers[0]], g), traffic, regions, lowerThresholdValue)
+    original_power, original_num_rooters, original_num_tran, original_num_edfa = EAFFB(nodes, links, g, traffic, regions, lowerThresholdValue)
+    return result, original_power, num_rooters, num_tran, num_edfa, original_num_rooters, original_num_tran, original_num_edfa
 

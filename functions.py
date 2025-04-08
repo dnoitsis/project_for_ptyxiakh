@@ -154,7 +154,7 @@ def calculate_energy_consumption(traffic, shortestPaths, nodes):
     #print("eTran% = " + str(eTran / eTotal))
     #print("eEdfa% = " + str(eEdfa / eTotal))
 
-    return eTotal
+    return eTotal, num_rooters, num_tran, num_edfa
 
 
 # Creates the Cij matrix.

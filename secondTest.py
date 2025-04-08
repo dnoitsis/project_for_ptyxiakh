@@ -25,7 +25,7 @@ nodes = ['ATH', 'LAR', 'THE', 'SER', 'DRA', 'XAN', 'LIM', 'MIT', 'CHI', 'SYR', '
 traffic = createTrafficMatrix(nodes, 20*6)
 
 # you can change the lower threshold value here.
-lowerThresholdValue = 0.5
+lowerThresholdValue = 0.2
 
 # you can change the times that you want to run the simulation here.
 test_times = 10
@@ -34,13 +34,25 @@ for i in range(1, 7):
     sum_of_result = 0
     sum_of_original_power = 0
     sum_of_no_seismic_zones_eaffb = 0
+    sum_of_num_rooters = 0
+    sum_of_num_tran = 0
+    sum_of_num_edfa = 0
+    sum_of_original_num_rooters = 0
+    sum_of_original_num_tran = 0
+    sum_of_original_num_edfa = 0
     for j in range(test_times):
         traffic = createTrafficMatrix(nodes, 20*i)
-        result, original_power = proposedAlgorithm(nodes, links, g, traffic, regionLinks, lowerThresholdValue)
-        no_seismic_zones_eaffb = EAFFB(nodes, links, g, traffic, regionLinks, 0.9)
+        result, original_power, num_rooters, num_tran, num_edfa, original_num_rooters, original_num_tran, original_num_edfa = proposedAlgorithm(nodes, links, g, traffic, regionLinks, lowerThresholdValue)
+        no_seismic_zones_eaffb, dummy_num_rooters, dummy_num_tran, dummy_num_edfa = EAFFB(nodes, links, g, traffic, regionLinks, 0.9)
         sum_of_result += result/1000
         sum_of_original_power += original_power/1000
         sum_of_no_seismic_zones_eaffb += no_seismic_zones_eaffb/1000
+        sum_of_num_rooters += num_rooters
+        sum_of_num_tran += num_tran
+        sum_of_num_edfa += num_edfa
+        sum_of_original_num_rooters += original_num_rooters
+        sum_of_original_num_tran += original_num_tran
+        sum_of_original_num_edfa += original_num_edfa
 
     print("no_seismic_zones EAFFB " + str(int(lowerThresholdValue*100)) + "%: " + str(sum_of_no_seismic_zones_eaffb / test_times))
     print("new EAFFB " + str(int(lowerThresholdValue*100)) + "%: " + str(sum_of_result / test_times))
@@ -52,6 +64,13 @@ for i in range(1, 7):
 
     per = (int(sum_of_original_power / test_times)-int(sum_of_result / test_times)) / int(sum_of_original_power / test_times)
     print("NEW energy cost is lower " + str(int(per * 100)) + "%")
+
+    print("NEW num_rooters " + str(int(sum_of_num_rooters / test_times)))
+    print("NEW num_tran " + str(int(sum_of_num_tran / test_times)))
+    print("NEW num_edfa " + str(int(sum_of_num_edfa / test_times)))
+    print("OLD num_rooters " + str(int(sum_of_original_num_rooters / test_times)))
+    print("OLD num_tran " + str(int(sum_of_original_num_tran / test_times)))
+    print("OLD num_edfa " + str(int(sum_of_original_num_edfa / test_times)))
 
 
     print("///////")
