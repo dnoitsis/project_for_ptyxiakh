@@ -34,6 +34,7 @@ def findAllRequestsUsingThisLink(shortestPaths, link):
             requestsUsingThisLink.append(path)
     return requestsUsingThisLink
 
+
 # Finds all the requests using this node excluding the paths that start or end on that node.
 def findAllRequestsUsingThisNode(shortestPaths, node):
     requestsUsingThisNode = []
@@ -91,7 +92,7 @@ def createTrafficMatrix(nodes, x):
         for j in nodes:
             rand_traffic = random.randint(10, 2 * x - 10)
             traffic[i + j] = rand_traffic
-            total_traffic +=  rand_traffic
+            total_traffic += rand_traffic
 
     return traffic, total_traffic
 
@@ -126,7 +127,49 @@ def createTrafficMatrix2(nodes_pop, scale=1.0, noise=True, self_traffic_factor=0
             traffic[i + j]= int(value)
             total_traffic += int(value)
 
-    return traffic,total_traffic
+    return traffic, total_traffic
+
+
+def perCalc(sum_of_original_power, sum_of_result, test_times):
+    per = (int(sum_of_original_power / test_times) - int(sum_of_result / test_times)) / int(
+        sum_of_original_power / test_times)
+
+    return per * 100
+
+
+def createTrafficMatrix3(nodes_pop, scale=1.0, noise=True, self_traffic_factor=0.2):
+    """
+    Create a traffic matrix based on population sizes.
+    - Traffic between nodes: proportional to pop_i * pop_j
+    - Self-traffic: proportional to pop_i only
+    - Total traffic grows linearly with 'scale' (just like x in the random method)
+    """
+    traffic = {}
+    total_traffic = 0
+
+    # First compute base traffic values (without scale)
+    for i, pop_i in nodes_pop:
+        for j, pop_j in nodes_pop:
+            if i == j:
+                # self traffic depends only on population
+                value = pop_i * self_traffic_factor / 1e3
+            else:
+                # between nodes: proportional to population product
+                value = (pop_i * pop_j) / 1e6
+
+            if noise:
+                value *= random.uniform(0.9, 1.1)
+
+            traffic[i + j] = value
+            total_traffic += value
+
+    # Normalize so scale behaves like x (linear growth)
+    factor = scale / (total_traffic / len(traffic))  # average ≈ scale
+    for k in traffic:
+        traffic[k] = int(traffic[k] * factor)
+
+    total_traffic = sum(traffic.values())
+    return traffic, total_traffic
 
 
 def return_critical_regions(regions, lowerThresholdValue):
@@ -163,6 +206,7 @@ def return_critical_regions(regions, lowerThresholdValue):
 
     return out
 
+
 def return_critical_links(regions,lowerThresholdValue):
     critical_links = []
     critical_links_dict = {}
@@ -174,6 +218,7 @@ def return_critical_links(regions,lowerThresholdValue):
     critical_links = list(critical_links_dict.keys())
     return critical_links
 
+
 def return_critical_nodes(nodes, lowerThresholdValue):
     Mx = 5
     T = 5
@@ -181,11 +226,11 @@ def return_critical_nodes(nodes, lowerThresholdValue):
     xR, yR, n, tesssst = create_x_y_forEveryNodeRegion(nodes)
 
     out = []
-    print("len(nodes): " + str(len(nodes)))
+    # print("len(nodes): " + str(len(nodes)))
 
     for i in range(len(nodes) - 1):
         if len(xR[i]) < 2:
-            print(f"Skipping node {nodes[i]} (not enough data)")
+            # print(f"Skipping node {nodes[i]} (not enough data)")
             continue
 
         sum_x = sum(xR[i])
@@ -197,7 +242,7 @@ def return_critical_nodes(nodes, lowerThresholdValue):
         D = N * sum_x_pow_of_2 - (sum_x * sum_x)
 
         if D == 0:
-            print(f"Skipping node {nodes[i]} (zero denominator in regression)")
+            # print(f"Skipping node {nodes[i]} (zero denominator in regression)")
             continue
 
         b = (N * sum_xy - sum_x * sum_y) / D
@@ -408,10 +453,7 @@ def bfs(start, end, g):
     return False
 
 
-
-
-
-def bfs_avoid_critical(start, end, g, critical_links):
+def bfs_avoid_critical_links(start, end, g, critical_links):
     """
     BFS that finds a path from start to end in a graph g.
     Avoids critical links if possible; uses them only if no other path exists.
@@ -481,6 +523,84 @@ def bfs_avoid_critical(start, end, g, critical_links):
     return bfs(allow_critical=True) or False
 
 
+def bfs_avoid_critical_links_and_nodes(start, end, g, critical_links, critical_nodes):
+    """
+    BFS that finds a path from start to end in a graph g.
+    Avoids critical links and critical nodes if possible.
+    Falls back to allowing them if no alternative exists.
+
+    Args:
+        start: starting node (string)
+        end: ending node (string)
+        g: graph as list of [node, link] pairs
+        critical_links: set of link IDs to avoid if possible
+        critical_nodes: set of nodes to avoid if possible
+
+    Returns:
+        [nodes_path, links_path] or False if no path exists
+    """
+
+    def directLinkWith(node):
+        """Return neighbors and links from the node"""
+        neighbors, links = [], []
+        start_links = [pair[1] for pair in g if pair[0] == node]
+
+        for link in start_links:
+            for pair in g:
+                if pair[0] != node and pair[1] == link:
+                    neighbors.append(pair[0])
+                    links.append(link)
+        return neighbors, links
+
+    def bfs(allow_critical=False):
+        queue = deque([[start]])  # paths of nodes
+        link_queue = deque([[]])  # paths of links
+        explored = set()
+
+        while queue:
+            path = queue.popleft()
+            link_path = link_queue.popleft()
+            node = path[-1]
+
+            if node == end:
+                return [path, link_path]
+
+            if node in explored:
+                continue
+
+            neighbors, links = directLinkWith(node)
+
+            for i in range(len(neighbors)):
+                nbr = neighbors[i]
+                link = links[i]
+
+                # Avoid critical links if not allowed
+                if not allow_critical and link in critical_links:
+                    continue
+
+                # Avoid critical nodes if not allowed (unless start/end)
+                if (not allow_critical
+                    and nbr in critical_nodes
+                    and nbr not in (start, end)):
+                    continue
+
+                if nbr not in path:  # avoid cycles
+                    queue.append(path + [nbr])
+                    link_queue.append(link_path + [link])
+
+            explored.add(node)
+
+        return None
+
+    # First try: avoid critical links and nodes
+    result = bfs(allow_critical=False)
+    if result:
+        return result
+
+    # Second try: allow them if no alternative exists
+    return bfs(allow_critical=True) or False
+
+
 # Calculates and create the x and y arrays for every region, after loading the data.
 def create_x_y_forEveryRegion(numberOfRegions):
     xRegions = []
@@ -510,6 +630,7 @@ def create_x_y_forEveryRegion(numberOfRegions):
 
     return xRegions, yRegions, test, test2
 
+
 # Calculates and create the x and y arrays for every region, after loading the data.
 def create_x_y_forEveryNodeRegion(nodes):
     xRegions = []
@@ -518,11 +639,11 @@ def create_x_y_forEveryNodeRegion(nodes):
     test2 = []
 
     for i in range(len(nodes) - 1):
-        print(f"Processing node {i}: {nodes[i]}")
+        # print(f"Processing node {i}: {nodes[i]}")
         try:
             df = pd.read_csv(f"nodes_seismic_data/{nodes[i]}-100-2.csv", header=0)
         except FileNotFoundError:
-            print(f"Warning: Missing data file for node {nodes[i]}, skipping...")
+            # print(f"Warning: Missing data file for node {nodes[i]}, skipping...")
             xRegions.append([])
             yRegions.append([])
             test.append(0)
@@ -533,7 +654,7 @@ def create_x_y_forEveryNodeRegion(nodes):
         earthquakes = df.loc[df['Magnitude (ML)'] >= 6.0, 'Magnitude (ML)'].values
 
         if len(earthquakes) == 0:
-            print(f"No qualifying earthquakes for node {nodes[i]}")
+            # print(f"No qualifying earthquakes for node {nodes[i]}")
             xRegions.append([])
             yRegions.append([])
             test.append(0)
