@@ -25,6 +25,9 @@ nodes = ['ATH', 'LAR', 'THE', 'SER', 'DRA', 'XAN', 'LIM', 'MIT', 'CHI', 'SYR', '
 nodes_pop = [['ATH', 4324695], ['LAR', 688255], ['THE', 1644545], ['SER', 151124], ['DRA', 215942], ['XAN', 345924], ['LIM', 17262], ['MIT', 83755], ['CHI', 52590], ['SYR', 112615], ['SAM', 42423], ['RHO', 190071], ['HER', 382836], ['RET', 84866], ['CHA', 156706],
          ['KOZ', 254595], ['IOA', 305971], ['LOU', 224912], ['MES', 192345], ['PAT', 305979], ['LEH', 150408], ['KAL', 161288], ['TRI', 162020], ['COR', 231360]]
 
+critical_regions_fire = [19]
+critical_regions_flood = [14]
+
 # crating the traffic matrix.
 traffic, total_traffic = createTrafficMatrix(nodes, 20*6)
 traffic2, total_traffic2 = createTrafficMatrix2(nodes_pop, scale=0.1, noise=True, self_traffic_factor=1)
@@ -114,6 +117,9 @@ for i in range(1, 7):
     sum_of_EAFFB2_with_critical_nodes_30 = 0
 
     sum_of_proposed_alg = 0
+
+    sum_of_EAFFB2_with_critical_nodes_and_fire_and_flood_disasters = 0
+
     for j in range(test_times):
         traffic, total_traffic = createTrafficMatrix(nodes, 20*i)
         #traffic2 = createTrafficMatrix(test_nodes, 20 * i)
@@ -139,6 +145,9 @@ for i in range(1, 7):
 
         eaffb2, dummy_num_rooters, dummy_num_tran, dummy_num_edfa = EAFFB2_with_critical_nodes(nodes, links, g, traffic, regionLinks, 0.3,original_shortest_paths, critical_nodes)
         sum_of_EAFFB2_with_critical_nodes_30 += eaffb2
+
+        EAFFB2_with_critical_nodes_and_fire_and_flood_disasters_result, dummy_num_rooters, dummy_num_tran, dummy_num_edfa = sum_of_EAFFB2_with_critical_nodes_and_fire_and_flood_disasters(nodes, links, g, traffic, regionLinks, 0.3,original_shortest_paths, critical_nodes, critical_regions_fire, critical_regions_flood)
+        sum_of_EAFFB2_with_critical_nodes_and_fire_and_flood_disasters += EAFFB2_with_critical_nodes_and_fire_and_flood_disasters_result
 
     #print("test_IP-SB: " + str(sum_of_test_IP_SB / 10000))
     #print("IP-SB: " + str(sum_of_IP_SB / 10))
