@@ -4,7 +4,45 @@ from functions_didaktoriko import bfs, create_Cij, create_Wij, create_fmn, direc
     create_x_y_forEveryRegion, new_g, findAllRequestsUsingThisLink, brokenPaths, sum2, sum1, \
     checksIfTheNetworkIsNotCutOff, isThisLinkCritical, new_links, calculate_laying_cost, \
     is_this_link_in_min_combination, checksIfTheNetworkIsNotCutOff_EAFFB, create_fmn2, create_Wij_Aij, create_Wmn, \
-    create_Cij_new, create_Wmn_Lmn_new, calculate_energy_consumption, return_critical_regions, return_critical_links, findAllRequestsUsingThisNode
+    create_Cij_new, create_Wmn_Lmn_new, calculate_energy_consumption, return_critical_regions, return_critical_links, \
+    findAllRequestsUsingThisNode, calculate_repair_cost, calculate_repair_cost_for_nodes
+
+links_location = {
+    "236": "plain",
+    "147": "plain",
+    "73": "plain",
+    "51": "plain",
+    "62": "plain",
+    "153": "sea",
+    "157": "sea",
+    "0111": "sea",
+    "160": "sea",
+    "130": "sea",
+    "182": "sea",
+    "270": "sea",
+    "341": "sea",
+    "251": "sea",
+    "60": "plain",
+    "45": "plain",
+    "279": "sea",
+    "70": "plain",
+    "69": "plain",
+    "63": "plain",
+    "125": "plain",
+    "54": "plain",
+    "111": "plain",
+    "31": "sea",
+    "110": "plain",
+    "57": "plain",
+    "109": "plain",
+    "99": "plain",
+    "00105": "sea",
+    "00134": "plain",
+    "00237": "sea",
+    "00143": "plain",
+    "00229": "sea",
+    "00212": "sea"
+}
 
 eee = []
 eeek = {}
@@ -28,6 +66,9 @@ def EAFFB2(nodes, links, g, traffic, regions, lowerThresholdValue, original_shor
     total_cost = 0
     regions_list = []
     shortestPaths = []
+
+    backup_links = []
+    links_that_need_repair = []
 
     for shortestPpath in original_shortest_paths:
         shortestPaths.append(shortestPpath)
@@ -73,8 +114,11 @@ def EAFFB2(nodes, links, g, traffic, regions, lowerThresholdValue, original_shor
             regions_list.append(i+1)
             count += 1
             for link in regions[i]:
-                if is_this_link_in_min_combination(link, links):
-                    total_cost += COST_FOR_REPAIR
+                links_that_need_repair.append(link)
+
+
+                # if is_this_link_in_min_combination(link, links):
+                #     total_cost += COST_FOR_REPAIR
 
                 for path in brokenPaths(findAllRequestsUsingThisLink(shortestPaths, link)):
                     new_path = bfs(path[0], path[1], new_g(regions[i], g))
@@ -82,6 +126,11 @@ def EAFFB2(nodes, links, g, traffic, regions, lowerThresholdValue, original_shor
                         return False, 0, 0, 0
 
                     new_shortestPaths.append(new_path)
+
+                for link in new_path[1]:
+                    backup_links.append(link)
+
+
 
     shortestPaths += new_shortestPaths
 
@@ -91,6 +140,16 @@ def EAFFB2(nodes, links, g, traffic, regions, lowerThresholdValue, original_shor
         total_hops += len(path[1])
 
     eTotal, num_rooters, num_tran, num_edfa = calculate_energy_consumption(traffic, shortestPaths, nodes)
+
+    laying_cost = calculate_laying_cost(backup_links, links_location)
+
+    repair_cost, repair_hours = calculate_repair_cost(links_that_need_repair, links_location)
+
+    print("laying_cost for backup paths= " + str(laying_cost))
+
+    print("repair_cost for damaged links= " + str(repair_cost))
+    print("repair_hours for damaged links= " + str(repair_hours))
+
     return eTotal, num_rooters, num_tran, num_edfa
 
 
@@ -100,11 +159,16 @@ def EAFFB2_with_critical_nodes(nodes, links, g, traffic, regions, lowerThreshold
     regions_list = []
     shortestPaths = []
 
+    backup_links = []
+    links_that_need_repair = []
+
+    nodes_need_repair = 0
+
     for shortestPpath in original_shortest_paths:
         shortestPaths.append(shortestPpath)
 
-    print("EAFFB2 shortestPaths done")
-    print("shortestPaths " + str(shortestPaths))
+    # print("EAFFB2 shortestPaths done")
+    # print("shortestPaths " + str(shortestPaths))
     xR, yR, n, tesssst = create_x_y_forEveryRegion(len(regions))
 
     # Creating the backup paths, for the links inside the regions that have over the lowerThresholdValue possibility.
@@ -135,8 +199,10 @@ def EAFFB2_with_critical_nodes(nodes, links, g, traffic, regions, lowerThreshold
             regions_list.append(i+1)
             count += 1
             for link in regions[i]:
-                if is_this_link_in_min_combination(link, links):
-                    total_cost += COST_FOR_REPAIR
+                links_that_need_repair.append(link)
+
+                # if is_this_link_in_min_combination(link, links):
+                #     total_cost += COST_FOR_REPAIR
 
                 for path in brokenPaths(findAllRequestsUsingThisLink(shortestPaths, link)):
                     new_path = bfs(path[0], path[1], new_g(regions[i], g))
@@ -145,17 +211,229 @@ def EAFFB2_with_critical_nodes(nodes, links, g, traffic, regions, lowerThreshold
 
                     new_shortestPaths.append(new_path)
 
+                    for link in new_path[1]:
+                        backup_links.append(link)
+
     shortestPaths += new_shortestPaths
 
-    # calculating new paths for node disasters.
     new_shortestPaths_for_critical_nodes = []
     for node in critical_nodes:
+        nodes_need_repair += 1
         for path in brokenPaths(findAllRequestsUsingThisNode(shortestPaths, node)):
             new_path = bfs(path[0], path[1], new_g(regions[i], g))
             if not new_path:
                 return False, 0, 0, 0
 
             new_shortestPaths_for_critical_nodes.append(new_path)
+
+            for link in new_path[1]:
+                backup_links.append(link)
+
+    shortestPaths += new_shortestPaths_for_critical_nodes
+
+    # Calculating the average hops.
+    total_hops = 0
+    for path in shortestPaths:
+        total_hops += len(path[1])
+
+    eTotal, num_rooters, num_tran, num_edfa = calculate_energy_consumption(traffic, shortestPaths, nodes)
+    laying_cost = calculate_laying_cost(backup_links, links_location)
+
+    repair_cost, repair_hours = calculate_repair_cost(links_that_need_repair, links_location)
+
+    print("laying_cost for backup paths= " + str(laying_cost))
+
+    print("repair_cost for damaged links= " + str(repair_cost))
+    print("repair_hours for damaged links= " + str(repair_hours))
+
+    nodes_repair_cost = calculate_repair_cost_for_nodes(nodes_need_repair)
+
+    print("nodes_repair_cost for damaged nodes= " + str(nodes_repair_cost))
+
+    return eTotal, num_rooters, num_tran, num_edfa
+
+
+#
+def EAFFB_with_critical_nodes(nodes, links, g, traffic, regions, lowerThresholdValue, critical_nodes):
+    count = 0
+    total_cost = 0
+    regions_list = []
+    shortestPaths = []
+
+    backup_links = []
+    links_that_need_repair = []
+
+    nodes_need_repair = 0
+
+    # # Creating the paths, between all the nodes.
+    for i in nodes:
+        for j in nodes:
+            if i != j:
+                path = bfs(i, j, g)
+                if not path:
+                    return False, 0, 0, 0
+                shortestPaths.append(path)
+
+    xR, yR, n, tesssst = create_x_y_forEveryRegion(len(regions))
+
+    # Creating the backup paths, for the links inside the regions that have over the lowerThresholdValue possibility.
+    new_shortestPaths = []
+    for i in range(len(regions)):
+        # Calculating the values of, D, at and b.
+        sum_x = 0
+        sum_y = 0
+        sum_xy = 0
+        sum_x_pow_of_2 = 0
+        for j in range(len(xR[i])):
+            sum_x += xR[i][j]
+            sum_y += yR[i][j]
+            sum_xy += xR[i][j] * yR[i][j]
+            sum_x_pow_of_2 += xR[i][j] * xR[i][j]
+
+        N = len(xR[i])
+        D = N * sum_x_pow_of_2 - (sum_x * sum_x)
+        b = (N * sum_xy - sum_x * sum_y) / D
+        at = (sum_x_pow_of_2 * sum_y - sum_x * sum_xy) / D
+
+        # Calculating the values of, a, tmx and pt.
+        a = at - math.log(t_study, 10)
+        tmx = math.pow(10, -b * Mx) / math.pow(10, a)
+        pt = 1 - math.pow(math.e, -T / tmx)
+
+        if pt >= lowerThresholdValue:
+            regions_list.append(i+1)
+            count += 1
+            for link in regions[i]:
+                links_that_need_repair.append(link)
+                # if is_this_link_in_min_combination(link, links):
+                #     total_cost += COST_FOR_REPAIR
+
+                for path in brokenPaths(findAllRequestsUsingThisLink(shortestPaths, link)):
+                    new_path = bfs(path[0], path[1], new_g(regions[i], g))
+                    if not new_path:
+                        return False, 0, 0, 0
+
+                    new_shortestPaths.append(new_path)
+
+                    for link in new_path[1]:
+                        backup_links.append(link)
+
+    shortestPaths += new_shortestPaths
+
+    new_shortestPaths_for_critical_nodes = []
+    for node in critical_nodes:
+        nodes_need_repair += 1
+        for path in brokenPaths(findAllRequestsUsingThisNode(shortestPaths, node)):
+            new_path = bfs(path[0], path[1], new_g(regions[i], g))
+            if not new_path:
+                return False, 0, 0, 0
+
+            new_shortestPaths_for_critical_nodes.append(new_path)
+
+            for link in new_path[1]:
+                backup_links.append(link)
+
+    shortestPaths += new_shortestPaths_for_critical_nodes
+
+    # Calculating the average hops.
+    total_hops = 0
+    for path in shortestPaths:
+        total_hops += len(path[1])
+
+    eTotal, num_rooters, num_tran, num_edfa = calculate_energy_consumption(traffic, shortestPaths, nodes)
+
+    laying_cost = calculate_laying_cost(backup_links, links_location)
+
+    repair_cost, repair_hours = calculate_repair_cost(links_that_need_repair, links_location)
+
+    print("laying_cost for backup paths= " + str(laying_cost))
+
+    print("repair_cost for damaged links= " + str(repair_cost))
+    print("repair_hours for damaged links= " + str(repair_hours))
+
+    nodes_repair_cost = calculate_repair_cost_for_nodes(nodes_need_repair)
+
+    print("nodes_repair_cost for damaged nodes= " + str(nodes_repair_cost))
+
+    return eTotal, num_rooters, num_tran, num_edfa
+
+
+#
+def EAFFB2_with_critical_nodes_and_fire_and_flood_disasters(nodes, links, g, traffic, regions, lowerThresholdValue, original_shortest_paths, critical_nodes, critical_regions_fire, critical_regions_flood):
+    count = 0
+    total_cost = 0
+    regions_list = []
+    shortestPaths = []
+
+    backup_links = []
+    links_that_need_repair = []
+
+    nodes_need_repair = 0
+
+    for shortestPpath in original_shortest_paths:
+        shortestPaths.append(shortestPpath)
+
+    # print("EAFFB2 shortestPaths done")
+    # print("shortestPaths " + str(shortestPaths))
+    xR, yR, n, tesssst = create_x_y_forEveryRegion(len(regions))
+
+    # Creating the backup paths, for the links inside the regions that have over the lowerThresholdValue possibility.
+    new_shortestPaths = []
+    for i in range(len(regions)):
+        # Calculating the values of, D, at and b.
+        sum_x = 0
+        sum_y = 0
+        sum_xy = 0
+        sum_x_pow_of_2 = 0
+        for j in range(len(xR[i])):
+            sum_x += xR[i][j]
+            sum_y += yR[i][j]
+            sum_xy += xR[i][j] * yR[i][j]
+            sum_x_pow_of_2 += xR[i][j] * xR[i][j]
+
+        N = len(xR[i])
+        D = N * sum_x_pow_of_2 - (sum_x * sum_x)
+        b = (N * sum_xy - sum_x * sum_y) / D
+        at = (sum_x_pow_of_2 * sum_y - sum_x * sum_xy) / D
+
+        # Calculating the values of, a, tmx and pt.
+        a = at - math.log(t_study, 10)
+        tmx = math.pow(10, -b * Mx) / math.pow(10, a)
+        pt = 1 - math.pow(math.e, -T / tmx)
+
+        if pt >= lowerThresholdValue:
+            regions_list.append(i+1)
+            count += 1
+            for link in regions[i]:
+                links_that_need_repair.append(link)
+                # if is_this_link_in_min_combination(link, links):
+                #     total_cost += COST_FOR_REPAIR
+
+                for path in brokenPaths(findAllRequestsUsingThisLink(shortestPaths, link)):
+                    new_path = bfs(path[0], path[1], new_g(regions[i], g))
+                    if not new_path:
+                        return False, 0, 0, 0
+
+                    new_shortestPaths.append(new_path)
+
+                    for link in new_path[1]:
+                        backup_links.append(link)
+
+    shortestPaths += new_shortestPaths
+
+    # calculating new paths for node disasters.
+    new_shortestPaths_for_critical_nodes = []
+    for node in critical_nodes:
+        nodes_need_repair += 1
+        for path in brokenPaths(findAllRequestsUsingThisNode(shortestPaths, node)):
+            new_path = bfs(path[0], path[1], new_g(regions[i], g))
+            if not new_path:
+                return False, 0, 0, 0
+
+            new_shortestPaths_for_critical_nodes.append(new_path)
+
+            for link in new_path[1]:
+                backup_links.append(link)
 
     shortestPaths += new_shortestPaths_for_critical_nodes
 
@@ -170,6 +448,9 @@ def EAFFB2_with_critical_nodes(nodes, links, g, traffic, regions, lowerThreshold
 
                 new_shortestPaths_critical_regions_fire.append(new_path)
 
+                for link in new_path[1]:
+                    backup_links.append(link)
+
     shortestPaths += new_shortestPaths_critical_regions_fire
 
     # calculating new paths for flood disasters.
@@ -183,6 +464,9 @@ def EAFFB2_with_critical_nodes(nodes, links, g, traffic, regions, lowerThreshold
 
                 new_shortestPaths_critical_regions_flood.append(new_path)
 
+                for link in new_path[1]:
+                    backup_links.append(link)
+
     shortestPaths += new_shortestPaths_critical_regions_flood
 
     # Calculating the average hops.
@@ -191,6 +475,20 @@ def EAFFB2_with_critical_nodes(nodes, links, g, traffic, regions, lowerThreshold
         total_hops += len(path[1])
 
     eTotal, num_rooters, num_tran, num_edfa = calculate_energy_consumption(traffic, shortestPaths, nodes)
+
+    laying_cost = calculate_laying_cost(backup_links, links_location)
+
+    repair_cost, repair_hours = calculate_repair_cost(links_that_need_repair, links_location)
+
+    print("laying_cost for backup paths= " + str(laying_cost))
+
+    print("repair_cost for damaged links= " + str(repair_cost))
+    print("repair_hours for damaged links= " + str(repair_hours))
+
+    nodes_repair_cost = calculate_repair_cost_for_nodes(nodes_need_repair)
+
+    print("nodes_repair_cost for damaged nodes= " + str(nodes_repair_cost))
+
     return eTotal, num_rooters, num_tran, num_edfa
 
 

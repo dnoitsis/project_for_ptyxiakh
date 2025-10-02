@@ -1,5 +1,5 @@
 from functions import createTrafficMatrix, directLinkWith, bfs, findAllRequestsUsingThisLink
-from algorithms import IP_SB, EAFFB, SZFB, npa_nea, newAlgorithm22, IP_SB2
+from algorithms import IP_SB, EAFFB, SZFB, npa_nea, IP_SB2
 import math
 
 

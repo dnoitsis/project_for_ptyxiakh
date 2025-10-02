@@ -1,8 +1,46 @@
 from functions_didaktoriko import createTrafficMatrix, return_critical_nodes, return_critical_regions, \
     createTrafficMatrix2, return_critical_links, bfs, perCalc, bfs_avoid_critical_links, \
-    bfs_avoid_critical_links_and_nodes
+    bfs_avoid_critical_links_and_nodes, calc_new_traffic
 from algorithms import EAFFB, proposedAlgorithm
-from algorithms_didaktoriko import EAFFB2, EAFFB2_with_critical_nodes, EAFFB_with_critical_nodes
+from algorithms_didaktoriko import EAFFB2, EAFFB2_with_critical_nodes, \
+    EAFFB2_with_critical_nodes_and_fire_and_flood_disasters, EAFFB_with_critical_nodes
+
+links_location = {
+    "236": "plain",
+    "147": "plain",
+    "73": "plain",
+    "51": "plain",
+    "62": "plain",
+    "153": "sea",
+    "157": "sea",
+    "0111": "sea",
+    "160": "sea",
+    "130": "sea",
+    "182": "sea",
+    "270": "sea",
+    "341": "sea",
+    "251": "sea",
+    "60": "plain",
+    "45": "plain",
+    "279": "sea",
+    "70": "plain",
+    "69": "plain",
+    "63": "plain",
+    "125": "plain",
+    "54": "plain",
+    "111": "plain",
+    "31": "sea",
+    "110": "plain",
+    "57": "plain",
+    "109": "plain",
+    "99": "plain",
+    "00105": "sea",
+    "00134": "plain",
+    "00237": "sea",
+    "00143": "plain",
+    "00229": "sea",
+    "00212": "sea"
+}
 
 links = ['236', '147', '73', '51', '62', '153', '157', '0111', '160', '130', '182', '270', '341', '251', '60', '45',
          '279', '70', '69', '63', '125', '54', '111', '31', '110', '57', '109', '99']
@@ -154,68 +192,58 @@ for i in range(1, 7):
 
     for j in range(test_times):
         traffic, total_traffic = createTrafficMatrix(nodes, 20*i)
-        print("traffic " + str(traffic))
-        print("total_traffic " + str(total_traffic))
-        traffic2, total_traffic2 = createTrafficMatrix2(nodes_pop, scale=20*i)
-        print("traffic2 " + str(traffic2))
-        print("total_traffic2 " + str(total_traffic2))
-
         traffic3, total_traffic3 = createTrafficMatrix2(nodes_pop, scale=20*i, noise=True, self_traffic_factor=1)
-        print("traffic3 " + str(traffic3))
-        print("total_traffic3 " + str(total_traffic3))
 
-        target_total = total_traffic
-        current_total = total_traffic3
-        factor = target_total / current_total
+        traffic3 = calc_new_traffic(total_traffic, total_traffic3, traffic3)
+        # print("new_traffic" + str(traffic3))
+        print("new_total_traffic" + str(sum(traffic3.values())))
 
-        for k in traffic:
-            traffic3[k] = int(traffic3[k] * factor)
+        # EAFFB
+        eaffb_result, dummy_num_rooters, dummy_num_tran, dummy_num_edfa = EAFFB(nodes, links, g, traffic, regionLinks, lowerThresholdValue)
+        sum_of_EAFFB_30 += eaffb_result
 
-        # New total
-        new_total_traffic = sum(traffic3.values())
-        print("new_traffic" + str(traffic3))
-        print("new_total_traffic" + str(new_total_traffic))
+        # EAFFB2 (NEW PATH CALCULATION SCHEME AT THE START)
+        eaffb2_result, dummy_num_rooters, dummy_num_tran, dummy_num_edfa = EAFFB2(nodes, links, g, traffic, regionLinks, lowerThresholdValue, original_shortest_paths)
+        sum_of_EAFFB2_30 += eaffb2_result
 
-        eaffb, dummy_num_rooters, dummy_num_tran, dummy_num_edfa = EAFFB(nodes, links, g, traffic, regionLinks, 0.3)
-        sum_of_EAFFB_30 += eaffb
+        # proposedAlgorithm (ON PTYXIAKI)
+        proposedAlgorithm_result, original_power, num_rooters, num_tran, num_edfa, original_num_rooters, original_num_tran, original_num_edfa = proposedAlgorithm(nodes, links, g, traffic, regionLinks, lowerThresholdValue)
+        sum_of_proposed_alg +=proposedAlgorithm_result
 
-        eaffb2, dummy_num_rooters, dummy_num_tran, dummy_num_edfa = EAFFB2(nodes, links, g, traffic, regionLinks, 0.3, original_shortest_paths)
-        sum_of_EAFFB2_30 += eaffb2
+        # EAFFB2 with critical nodes logic
+        eaffb2_with_critical_nodes_result, dummy_num_rooters, dummy_num_tran, dummy_num_edfa = EAFFB2_with_critical_nodes(nodes, links, g, traffic, regionLinks, lowerThresholdValue, original_shortest_paths, critical_nodes)
+        sum_of_EAFFB2_with_critical_nodes_30 += eaffb2_with_critical_nodes_result
 
-        result, original_power, num_rooters, num_tran, num_edfa, original_num_rooters, original_num_tran, original_num_edfa = proposedAlgorithm(nodes, links, g, traffic, regionLinks, 0.3)
-        sum_of_proposed_alg +=result
-        # e4 = npa_nea(nodes, links, g, traffic, regionLinks2, links_location)
+        # EAFFB with critical nodes logic
+        eaffb_with_critical_nodes_result, dummy_num_rooters, dummy_num_tran, dummy_num_edfa = EAFFB_with_critical_nodes(nodes, links, g, traffic, regionLinks, lowerThresholdValue, critical_nodes)
+        sum_of_EAFFB_with_critical_nodes_30 += eaffb_with_critical_nodes_result
 
-        eaffb2_with_critical_nodes, dummy_num_rooters, dummy_num_tran, dummy_num_edfa = EAFFB2_with_critical_nodes(nodes, links, g, traffic, regionLinks, 0.3, original_shortest_paths, critical_nodes)
-        sum_of_EAFFB2_with_critical_nodes_30 += eaffb2_with_critical_nodes
+        # EAFFB with traffic3
+        eaffb_traffic3_result, dummy_num_rooters, dummy_num_tran, dummy_num_edfa = EAFFB(nodes, links, g, traffic3, regionLinks, lowerThresholdValue)
+        sum_of_EAFFB_30_traffic3 += eaffb_traffic3_result
 
-        eaffb_with_critical_nodes, dummy_num_rooters, dummy_num_tran, dummy_num_edfa = EAFFB_with_critical_nodes(nodes, links, g, traffic, regionLinks, 0.3, critical_nodes)
-        sum_of_EAFFB_with_critical_nodes_30 += eaffb_with_critical_nodes
+        eaffb2_traffic3_result, dummy_num_rooters, dummy_num_tran, dummy_num_edfa = EAFFB2(nodes, links, g, traffic3, regionLinks, lowerThresholdValue, original_shortest_paths)
+        sum_of_EAFFB2_30_traffic3 += eaffb2_traffic3_result
 
+        proposedAlgorithm_traffic3_result, original_power, num_rooters, num_tran, num_edfa, original_num_rooters, original_num_tran, original_num_edfa = proposedAlgorithm(nodes, links, g, traffic3, regionLinks, lowerThresholdValue)
+        sum_of_proposed_alg_traffic3 += proposedAlgorithm_traffic3_result
 
-        # traffic3
-        eaffb_traffic3, dummy_num_rooters, dummy_num_tran, dummy_num_edfa = EAFFB(nodes, links, g, traffic3, regionLinks, 0.3)
-        sum_of_EAFFB_30_traffic3 += eaffb_traffic3
+        eaffb2_with_critical_nodes_traffic3_result, dummy_num_rooters, dummy_num_tran, dummy_num_edfa = EAFFB2_with_critical_nodes(nodes, links, g, traffic3, regionLinks, lowerThresholdValue, original_shortest_paths, critical_nodes)
+        sum_of_EAFFB2_with_critical_nodes_30_traffic3 += eaffb2_with_critical_nodes_traffic3_result
 
-        eaffb2_traffic3, dummy_num_rooters, dummy_num_tran, dummy_num_edfa = EAFFB2(nodes, links, g, traffic3, regionLinks, 0.3, original_shortest_paths)
-        sum_of_EAFFB2_30_traffic3 += eaffb2_traffic3
-
-        result_traffic3, original_power, num_rooters, num_tran, num_edfa, original_num_rooters, original_num_tran, original_num_edfa = proposedAlgorithm(nodes, links, g, traffic3, regionLinks, 0.3)
-        sum_of_proposed_alg_traffic3 += result_traffic3
-
-        eaffb2_with_critical_nodes_traffic3, dummy_num_rooters, dummy_num_tran, dummy_num_edfa = EAFFB2_with_critical_nodes(nodes, links, g, traffic3, regionLinks, 0.3, original_shortest_paths, critical_nodes)
-        sum_of_EAFFB2_with_critical_nodes_30_traffic3 += eaffb2_with_critical_nodes_traffic3
-
-        eaffb_with_critical_nodes_traffic3, dummy_num_rooters, dummy_num_tran, dummy_num_edfa = EAFFB_with_critical_nodes(nodes, links, g, traffic3, regionLinks, 0.3, critical_nodes)
-        sum_of_EAFFB_with_critical_nodes_30_traffic3 += eaffb_with_critical_nodes_traffic3
+        eaffb_with_critical_nodes_traffic3_result, dummy_num_rooters, dummy_num_tran, dummy_num_edfa = EAFFB_with_critical_nodes(nodes, links, g, traffic3, regionLinks, lowerThresholdValue, critical_nodes)
+        sum_of_EAFFB_with_critical_nodes_30_traffic3 += eaffb_with_critical_nodes_traffic3_result
 
 
 
-        eaffb3_with_critical_nodes_, dummy_num_rooters, dummy_num_tran, dummy_num_edfa = EAFFB2_with_critical_nodes(nodes, links, g, traffic, regionLinks, 0.3, original_shortest_paths_avoid_critical_links_and_nodes, critical_nodes)
-        sum_of_EAFFB3_with_critical_nodes_30 += eaffb3_with_critical_nodes_
+        eaffb3_with_critical_nodes_result, dummy_num_rooters, dummy_num_tran, dummy_num_edfa = EAFFB2_with_critical_nodes(nodes, links, g, traffic, regionLinks, lowerThresholdValue, original_shortest_paths_avoid_critical_links_and_nodes, critical_nodes)
+        sum_of_EAFFB3_with_critical_nodes_30 += eaffb3_with_critical_nodes_result
 
-        eaffb3_with_critical_nodes_traffic3, dummy_num_rooters, dummy_num_tran, dummy_num_edfa = EAFFB2_with_critical_nodes(nodes, links, g, traffic3, regionLinks, 0.3, original_shortest_paths_avoid_critical_links_and_nodes, critical_nodes)
-        sum_of_EAFFB3_with_critical_nodes_30_traffic3 += eaffb3_with_critical_nodes_traffic3
+        eaffb3_with_critical_nodes_traffic3_result, dummy_num_rooters, dummy_num_tran, dummy_num_edfa = EAFFB2_with_critical_nodes(nodes, links, g, traffic3, regionLinks, lowerThresholdValue, original_shortest_paths_avoid_critical_links_and_nodes, critical_nodes)
+        sum_of_EAFFB3_with_critical_nodes_30_traffic3 += eaffb3_with_critical_nodes_traffic3_result
+
+        EAFFB2_with_critical_nodes_and_fire_and_flood_disasters_result, dummy_num_rooters, dummy_num_tran, dummy_num_edfa = EAFFB2_with_critical_nodes_and_fire_and_flood_disasters(nodes, links, g, traffic3, regionLinks, lowerThresholdValue, original_shortest_paths_avoid_critical_links_and_nodes, critical_nodes, critical_regions_fire, critical_regions_flood)
+        sum_of_EAFFB2_with_critical_nodes_and_fire_and_flood_disasters += EAFFB2_with_critical_nodes_and_fire_and_flood_disasters_result
 
 
     # print("EAFFB 30%: " + str(sum_of_EAFFB_30 / test_times))
@@ -306,13 +334,17 @@ for i in range(1, 7):
     print("///////// CRITICAL NODES + TRAFFIC3 /////////")
     print(f"EAFFB2_with_critical_nodes_30_traffic3: {sum_of_EAFFB2_with_critical_nodes_30_traffic3 / test_times}")
     print(f"EAFFB_with_critical_nodes_30_traffic3: {sum_of_EAFFB_with_critical_nodes_30_traffic3 / test_times}")
-    print(
-        f"EAFFB2 vs EAFFB (with critical nodes, traffic3): {perCalc(sum_of_EAFFB_with_critical_nodes_30_traffic3, sum_of_EAFFB2_with_critical_nodes_30_traffic3, test_times)}% lower energy")
+    print(f"EAFFB2 vs EAFFB (with critical nodes, traffic3): {perCalc(sum_of_EAFFB_with_critical_nodes_30_traffic3, sum_of_EAFFB2_with_critical_nodes_30_traffic3, test_times)}% lower energy")
 
     print("///////// EAFFB3 /////////")
     print(f"EAFFB3_with_critical_nodes_30: {sum_of_EAFFB3_with_critical_nodes_30 / test_times}")
     print(f"EAFFB3_with_critical_nodes_30_traffic3: {sum_of_EAFFB3_with_critical_nodes_30_traffic3 / test_times}")
     print("============================================")
+
+    print("///////// EAFFB2_with_critical_nodes_and_fire_and_flood_disasters /////////")
+    print(f"EAFFB2_with_critical_nodes_and_fire_and_flood_disasters: {sum_of_EAFFB2_with_critical_nodes_and_fire_and_flood_disasters / test_times}")
+    print("============================================")
+
 
 
 

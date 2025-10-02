@@ -4,18 +4,68 @@ import math
 from collections import deque
 
 
+# repair costs(EUROS)
+PLAIN_REGION_REPAIR_COST = 15000
+MOUNTAINOUS_REGION_REPAIR_COST = 30000
+UNDERSEA_REGION_REPAIR_COST = 1000000
+
+# repair MTTR(HOURS)
+PLAIN_REGION_REPAIR_MTTR = 12
+MOUNTAINOUS_REGION_REPAIR_MTTR = 24
+UNDERSEA_REGION_REPAIR_MTTR = 336
+
+# construction costs(EUROS) per km
+PLAIN_REGION_CONSTRUCTION_COST_PER_KM = 30000
+MOUNTAINOUS_REGION_CONSTRUCTION_COST_PER_KM = 80000
+UNDERSEA_REGION_CONSTRUCTION_COST_PER_KM = 100000
+
+
+# repair node cost(EUROS)
+REPAIR_NODE_COST = 50000
+
+# repair node MTTR(HOURS)
+REPAIR_NODE_MTTR = 12
+
+
 # Calculates the cost for laying the networks fiber links.
 def calculate_laying_cost(links, links_location):
     total_cost = 0
-    cost_per_km_land = 43452
-    cost_per_km_sea = 90000
+    #cost_per_km_land = 43452
+    #cost_per_km_sea = 90000
     for link in links:
-        if links_location[link] == 'land':
-            total_cost += int(link) * cost_per_km_land
+        if links_location[link] == 'plain':
+            total_cost += int(link) * PLAIN_REGION_CONSTRUCTION_COST_PER_KM
+        elif links_location[link] == 'mountainous':
+            total_cost += int(link) * MOUNTAINOUS_REGION_CONSTRUCTION_COST_PER_KM
         else:
-            total_cost += int(link) * cost_per_km_sea
+            total_cost += int(link) * UNDERSEA_REGION_CONSTRUCTION_COST_PER_KM
 
     return total_cost
+
+
+# Calculates the cost for laying the networks fiber links.
+def calculate_repair_cost(links, links_location):
+    total_cost = 0
+    total_hours = 0
+    for link in links:
+        if links_location[link] == 'plain':
+            total_cost += PLAIN_REGION_REPAIR_COST
+            total_hours += PLAIN_REGION_REPAIR_MTTR
+        elif links_location[link] == 'mountainous':
+            total_cost += MOUNTAINOUS_REGION_REPAIR_COST
+            total_hours += MOUNTAINOUS_REGION_REPAIR_MTTR
+        else:
+            total_cost += UNDERSEA_REGION_REPAIR_COST
+            total_hours += UNDERSEA_REGION_REPAIR_MTTR
+
+    return total_cost, total_hours
+
+# Calculates the cost for laying the networks fiber links.
+def calculate_repair_cost_for_nodes(nodes):
+    total_cost = nodes * REPAIR_NODE_COST
+    total_hours = nodes * REPAIR_NODE_MTTR
+
+    return total_cost, total_hours
 
 
 # Checks if the path contains the given link.
@@ -128,6 +178,15 @@ def createTrafficMatrix2(nodes_pop, scale=1.0, noise=True, self_traffic_factor=0
             total_traffic += int(value)
 
     return traffic, total_traffic
+
+
+def calc_new_traffic(target_total, current_total, traffic):
+    factor = target_total / current_total
+
+    for k in traffic:
+        traffic[k] = int(traffic[k] * factor)
+
+    return traffic
 
 
 def perCalc(sum_of_original_power, sum_of_result, test_times):
