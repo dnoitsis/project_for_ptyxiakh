@@ -3,6 +3,42 @@ import pandas as pd
 import math
 from collections import deque
 
+links_location = {
+    "236": "mountainous",
+    "147": "mountainous",
+    "73": "plain",
+    "51": "plain",
+    "62": "mountainous",
+    "153": "sea",
+    "157": "sea",
+    "0111": "sea",
+    "160": "sea",
+    "130": "sea",
+    "182": "sea",
+    "270": "sea",
+    "341": "sea",
+    "251": "sea",
+    "60": "plain",
+    "45": "plain",
+    "279": "sea",
+    "70": "plain",
+    "69": "mountainous",
+    "63": "mountainous",
+    "125": "plain",
+    "54": "plain",
+    "111": "plain",
+    "31": "sea",
+    "110": "plain",
+    "57": "mountainous",
+    "109": "mountainous",
+    "99": "mountainous",
+    "00105": "sea",
+    "00134": "plain",
+    "00237": "sea",
+    "00143": "plain",
+    "00229": "sea",
+    "00212": "sea"
+}
 
 # repair costs(EUROS)
 PLAIN_REGION_REPAIR_COST = 15000
@@ -28,7 +64,7 @@ REPAIR_NODE_MTTR = 12
 
 
 # Calculates the cost for laying the networks fiber links.
-def calculate_laying_cost(links, links_location):
+def calculate_laying_cost(links):
     total_cost = 0
     #cost_per_km_land = 43452
     #cost_per_km_sea = 90000
@@ -44,7 +80,7 @@ def calculate_laying_cost(links, links_location):
 
 
 # Calculates the cost for laying the networks fiber links.
-def calculate_repair_cost(links, links_location):
+def calculate_repair_cost(links):
     total_cost = 0
     total_hours = 0
     for link in links:
@@ -59,6 +95,7 @@ def calculate_repair_cost(links, links_location):
             total_hours += UNDERSEA_REGION_REPAIR_MTTR
 
     return total_cost, total_hours
+
 
 # Calculates the cost for laying the networks fiber links.
 def calculate_repair_cost_for_nodes(nodes):
@@ -190,9 +227,7 @@ def calc_new_traffic(target_total, current_total, traffic):
 
 
 def perCalc(sum_of_original_power, sum_of_result, test_times):
-    per = (int(sum_of_original_power / test_times) - int(sum_of_result / test_times)) / int(
-        sum_of_original_power / test_times)
-
+    per = (int(sum_of_original_power / test_times) - int(sum_of_result / test_times)) / int(sum_of_original_power / test_times)
     return per * 100
 
 
@@ -234,7 +269,7 @@ def createTrafficMatrix3(nodes_pop, scale=1.0, noise=True, self_traffic_factor=0
 def return_critical_regions(regions, lowerThresholdValue):
     Mx = 5
     T = 5
-    t_study = 58 # years
+    t_study = 58  # years
     xR, yR, n, tesssst = create_x_y_forEveryRegion(len(regions))
 
     out = []
@@ -266,7 +301,7 @@ def return_critical_regions(regions, lowerThresholdValue):
     return out
 
 
-def return_critical_links(regions,lowerThresholdValue):
+def return_critical_links(regions, lowerThresholdValue):
     critical_links = []
     critical_links_dict = {}
     for region in return_critical_regions(regions, lowerThresholdValue):
