@@ -1,9 +1,10 @@
 from functions_didaktoriko import createTrafficMatrix, return_critical_nodes, return_critical_regions, \
     createTrafficMatrix2, return_critical_links, bfs, perCalc, bfs_avoid_critical_links, \
-    bfs_avoid_critical_links_and_nodes, calc_new_traffic, directLinkWith
+    bfs_avoid_critical_links_and_nodes, calc_new_traffic, directLinkWith, createRealisticTrafficMatrix
 from algorithms import EAFFB, proposedAlgorithm
 from algorithms_didaktoriko import EAFFB2, EAFFB2_with_critical_nodes, \
-    EAFFB2_with_critical_nodes_and_fire_and_flood_disasters, EAFFB_with_critical_nodes
+    EAFFB2_with_critical_nodes_and_fire_and_flood_disasters, EAFFB_with_critical_nodes, \
+    EAFFB_with_critical_nodes_and_fire_and_flood_disasters
 
 links = ['236', '147', '73', '51', '62', '153', '157', '0111', '160', '130', '182', '270', '341', '251', '60', '45',
          '279', '70', '69', '63', '125', '54', '111', '31', '110', '57', '109', '99']
@@ -82,88 +83,202 @@ print("For lowerThresholdValue: " + str(lowerThresholdValue))
 for i in range(1, 7):
     print("///  For avg traffic = " + str(20 * i))
     sum_of_EAFFB = 0    # original EAFFB
+    sum_of_EAFFB_realistic_traffic = 0
+
     sum_of_EAFFB2 = 0   # EAFFB with new shortest path calculation scheme.
+    sum_of_EAFFB2_laying_cost = 0
+    sum_of_EAFFB2_repair_cost = 0
+    sum_of_EAFFB2_repair_hours = 0
+    sum_of_EAFFB2_realistic_traffic = 0
+    sum_of_EAFFB2_realistic_traffic_laying_cost = 0
+    sum_of_EAFFB2_realistic_traffic_repair_cost = 0
+    sum_of_EAFFB2_realistic_traffic_repair_hours = 0
 
-    sum_of_EAFFB3_with_critical_nodes = 0
-    sum_of_EAFFB3_with_critical_nodes_traffic3 = 0
 
-    sum_of_EAFFB2_with_critical_nodes_30 = 0
-    sum_of_EAFFB_with_critical_nodes_30 = 0
+    sum_of_EAFFB_with_critical_nodes_and_fire_and_flood_disasters = 0
+    sum_of_EAFFB_with_critical_nodes_and_fire_and_flood_disasters_laying_cost = 0
+    sum_of_EAFFB_with_critical_nodes_and_fire_and_flood_disasters_repair_cost = 0
+    sum_of_EAFFB_with_critical_nodes_and_fire_and_flood_disasters_repair_hours = 0
+    sum_of_EAFFB_with_critical_nodes_and_fire_and_flood_disasters_realistic_traffic = 0
+    sum_of_EAFFB_with_critical_nodes_and_fire_and_flood_disasters_realistic_traffic_laying_cost = 0
+    sum_of_EAFFB_with_critical_nodes_and_fire_and_flood_disasters_realistic_traffic_repair_cost = 0
+    sum_of_EAFFB_with_critical_nodes_and_fire_and_flood_disasters_realistic_traffic_repair_hours = 0
 
-    sum_of_EAFFB_30_traffic3 = 0
-    sum_of_EAFFB2_30_traffic3 = 0
-    sum_of_proposed_alg_traffic3 = 0
-    sum_of_EAFFB2_with_critical_nodes_30_traffic3 = 0
-    sum_of_EAFFB_with_critical_nodes_30_traffic3 = 0
+
+    sum_of_EAFFB2_with_critical_nodes = 0
+    sum_of_EAFFB2_with_critical_nodes_laying_cost = 0
+    sum_of_EAFFB2_with_critical_nodes_repair_cost = 0
+    sum_of_EAFFB2_with_critical_nodes_repair_hours = 0
+    sum_of_EAFFB2_with_critical_nodes_realistic_traffic = 0
+    sum_of_EAFFB2_with_critical_nodes_realistic_traffic_laying_cost = 0
+    sum_of_EAFFB2_with_critical_nodes_realistic_traffic_repair_cost = 0
+    sum_of_EAFFB2_with_critical_nodes_realistic_traffic_repair_hours = 0
+
+
+    sum_of_EAFFB_with_critical_nodes = 0
+    sum_of_EAFFB_with_critical_nodes_laying_cost = 0
+    sum_of_EAFFB_with_critical_nodes_repair_cost = 0
+    sum_of_EAFFB_with_critical_nodes_repair_hours = 0
+    sum_of_EAFFB_with_critical_nodes_realistic_traffic = 0
+    sum_of_EAFFB_with_critical_nodes_realistic_traffic_laying_cost = 0
+    sum_of_EAFFB_with_critical_nodes_realistic_traffic_repair_cost = 0
+    sum_of_EAFFB_with_critical_nodes_realistic_traffic_repair_hours = 0
 
 
     sum_of_proposed_alg = 0
+    sum_of_proposed_alg_realistic_traffic = 0
+
 
     sum_of_EAFFB2_with_critical_nodes_and_fire_and_flood_disasters = 0
+    sum_of_EAFFB2_with_critical_nodes_and_fire_and_flood_disasters_laying_cost = 0
+    sum_of_EAFFB2_with_critical_nodes_and_fire_and_flood_disasters_repair_cost = 0
+    sum_of_EAFFB2_with_critical_nodes_and_fire_and_flood_disasters_repair_hours = 0
+    sum_of_EAFFB2_with_critical_nodes_and_fire_and_flood_disasters_realistic_traffic = 0
+    sum_of_EAFFB2_with_critical_nodes_and_fire_and_flood_disasters_realistic_traffic_laying_cost = 0
+    sum_of_EAFFB2_with_critical_nodes_and_fire_and_flood_disasters_traffic_repair_cost = 0
+    sum_of_EAFFB2_with_critical_nodes_and_fire_and_flood_disasters_realistic_traffic_repair_hours = 0
+
 
     for j in range(test_times):
         traffic, total_traffic = createTrafficMatrix(nodes, 20*i)
-        traffic3, total_traffic3 = createTrafficMatrix2(nodes_pop, scale=20*i, noise=True, self_traffic_factor=1)
+        realistic_traffic_calculated, total_realistic_traffic_calculated = createRealisticTrafficMatrix(nodes_pop, scale=20*i, noise=True, self_traffic_factor=1)
+        # scale it to the original traffic calculation method number.
+        realistic_traffic = calc_new_traffic(total_traffic, total_realistic_traffic_calculated, realistic_traffic_calculated)
 
-        traffic3 = calc_new_traffic(total_traffic, total_traffic3, traffic3)
-        # print("new_traffic" + str(traffic3))
-        # print("new_total_traffic" + str(sum(traffic3.values())))
+        # start executing algorithms.
 
+        # ////////////////////////////////////////////
         # EAFFB
         eaffb_result, dummy_num_rooters, dummy_num_tran, dummy_num_edfa = EAFFB(nodes, links, g, traffic, regionLinks, lowerThresholdValue)
         sum_of_EAFFB += eaffb_result
 
-        # EAFFB2 (NEW PATH CALCULATION SCHEME AT THE START)
-        eaffb2_result, dummy_num_rooters, dummy_num_tran, dummy_num_edfa = EAFFB2(nodes, g, traffic, critical_regions, original_shortest_paths_avoid_critical_links)
-        sum_of_EAFFB2 += eaffb2_result
+        # EAFFB with realistic_traffic
+        eaffb_realistic_traffic_result, dummy_num_rooters, dummy_num_tran, dummy_num_edfa = EAFFB(nodes, links, g, realistic_traffic, regionLinks,lowerThresholdValue)
+        sum_of_EAFFB_realistic_traffic += eaffb_realistic_traffic_result
+        # ////////////////////////////////////////////
 
+        # ////////////////////////////////////////////
         # proposedAlgorithm (ON PTYXIAKI)
         proposedAlgorithm_result, original_power, num_rooters, num_tran, num_edfa, original_num_rooters, original_num_tran, original_num_edfa = proposedAlgorithm(nodes, links, g, traffic, regionLinks, lowerThresholdValue)
-        sum_of_proposed_alg +=proposedAlgorithm_result
+        sum_of_proposed_alg += proposedAlgorithm_result
 
-        # EAFFB2 with critical nodes logic
-        # eaffb2_with_critical_nodes_result, dummy_num_rooters, dummy_num_tran, dummy_num_edfa = EAFFB2_with_critical_nodes(nodes, g, traffic, critical_regions, original_shortest_paths_avoid_critical_links, critical_nodes)
-        # sum_of_EAFFB2_with_critical_nodes_30 += eaffb2_with_critical_nodes_result
-        #
-        # # EAFFB with critical nodes logic
-        # eaffb_with_critical_nodes_result, dummy_num_rooters, dummy_num_tran, dummy_num_edfa = EAFFB_with_critical_nodes(nodes, g, traffic, critical_regions, original_shortest_paths_avoid_critical_links, critical_nodes)
-        # sum_of_EAFFB_with_critical_nodes_30 += eaffb_with_critical_nodes_result
-        #
-        # # EAFFB with traffic3
-        # eaffb_traffic3_result, dummy_num_rooters, dummy_num_tran, dummy_num_edfa = EAFFB(nodes, links, g, traffic3, regionLinks, lowerThresholdValue)
-        # sum_of_EAFFB_30_traffic3 += eaffb_traffic3_result
-        #
-        # eaffb2_traffic3_result, dummy_num_rooters, dummy_num_tran, dummy_num_edfa = EAFFB2(nodes, g, traffic3, critical_regions, original_shortest_paths_avoid_critical_links)
-        # sum_of_EAFFB2_30_traffic3 += eaffb2_traffic3_result
-        #
-        # proposedAlgorithm_traffic3_result, original_power, num_rooters, num_tran, num_edfa, original_num_rooters, original_num_tran, original_num_edfa = proposedAlgorithm(nodes, links, g, traffic3, regionLinks, lowerThresholdValue)
-        # sum_of_proposed_alg_traffic3 += proposedAlgorithm_traffic3_result
-        #
-        # eaffb2_with_critical_nodes_traffic3_result, dummy_num_rooters, dummy_num_tran, dummy_num_edfa = EAFFB2_with_critical_nodes(nodes, g, traffic3, critical_regions, original_shortest_paths_avoid_critical_links, critical_nodes)
-        # sum_of_EAFFB2_with_critical_nodes_30_traffic3 += eaffb2_with_critical_nodes_traffic3_result
-        #
-        # eaffb_with_critical_nodes_traffic3_result, dummy_num_rooters, dummy_num_tran, dummy_num_edfa = EAFFB_with_critical_nodes(nodes, g, traffic3, critical_regions, original_shortest_paths_avoid_critical_links, critical_nodes)
-        # sum_of_EAFFB_with_critical_nodes_30_traffic3 += eaffb_with_critical_nodes_traffic3_result
-        #
-        #
-        #
-        # eaffb3_with_critical_nodes_result, dummy_num_rooters, dummy_num_tran, dummy_num_edfa = EAFFB2_with_critical_nodes(nodes, g, traffic, critical_regions, original_shortest_paths_avoid_critical_links_and_nodes, critical_nodes)
-        # sum_of_EAFFB3_with_critical_nodes += eaffb3_with_critical_nodes_result
-        #
-        # eaffb3_with_critical_nodes_traffic3_result, dummy_num_rooters, dummy_num_tran, dummy_num_edfa = EAFFB2_with_critical_nodes(nodes, g, traffic3, critical_regions, original_shortest_paths_avoid_critical_links_and_nodes, critical_nodes)
-        # sum_of_EAFFB3_with_critical_nodes_traffic3 += eaffb3_with_critical_nodes_traffic3_result
-        #
-        # EAFFB2_with_critical_nodes_and_fire_and_flood_disasters_result, dummy_num_rooters, dummy_num_tran, dummy_num_edfa = EAFFB2_with_critical_nodes_and_fire_and_flood_disasters(nodes, g, traffic3, critical_regions, original_shortest_paths_avoid_critical_links_and_nodes, critical_nodes, critical_regions_fire, critical_regions_flood)
-        # sum_of_EAFFB2_with_critical_nodes_and_fire_and_flood_disasters += EAFFB2_with_critical_nodes_and_fire_and_flood_disasters_result
+        # proposedAlgorithm (ON PTYXIAKI) with realistic_traffic
+        proposedAlgorithm_realistic_traffic_result, original_power, num_rooters, num_tran, num_edfa, original_num_rooters, original_num_tran, original_num_edfa = proposedAlgorithm(nodes, links, g, realistic_traffic, regionLinks, lowerThresholdValue)
+        sum_of_proposed_alg_realistic_traffic += proposedAlgorithm_realistic_traffic_result
+        # ////////////////////////////////////////////
 
+        # ////////////////////////////////////////////
+        # EAFFB2 (NEW PATH CALCULATION SCHEME AT THE START)
+        eaffb2_result, eaffb2_laying_cost, eaffb2_repair_cost, eaffb2_repair_hours = EAFFB2(nodes, g, traffic, critical_regions, original_shortest_paths_avoid_critical_links)
+        sum_of_EAFFB2 += eaffb2_result
+        sum_of_EAFFB2_laying_cost += eaffb2_laying_cost
+        sum_of_EAFFB2_repair_cost += eaffb2_repair_cost
+        sum_of_EAFFB2_repair_hours += eaffb2_repair_hours
 
+        # EAFFB2 with realistic_traffic (NEW PATH CALCULATION SCHEME AT THE START)
+        eaffb2_realistic_traffic_result, eaffb2_realistic_traffic_laying_cost, eaffb2_realistic_traffic_repair_cost, eaffb2_realistic_traffic_repair_hours  = EAFFB2(nodes, g, realistic_traffic, critical_regions, original_shortest_paths_avoid_critical_links)
+        sum_of_EAFFB2_realistic_traffic += eaffb2_realistic_traffic_result
+        sum_of_EAFFB2_realistic_traffic_laying_cost += eaffb2_realistic_traffic_laying_cost
+        sum_of_EAFFB2_realistic_traffic_repair_cost += eaffb2_realistic_traffic_repair_cost
+        sum_of_EAFFB2_realistic_traffic_repair_hours += eaffb2_realistic_traffic_repair_hours
+        # ////////////////////////////////////////////
 
-    print("========== BASE COMPARISON ==========")
+        # ////////////////////////////////////////////
+        # EAFFB with critical nodes
+        eaffb_with_critical_nodes_result, eaffb_with_critical_nodes_laying_cost, eaffb_with_critical_nodes_repair_cost, eaffb_with_critical_nodes_repair_hours = EAFFB_with_critical_nodes(nodes, g, traffic, critical_regions, original_shortest_paths_avoid_critical_links_and_nodes, critical_nodes)
+        sum_of_EAFFB_with_critical_nodes += eaffb_with_critical_nodes_result
+        sum_of_EAFFB_with_critical_nodes_laying_cost += eaffb_with_critical_nodes_laying_cost
+        sum_of_EAFFB_with_critical_nodes_repair_cost += eaffb_with_critical_nodes_repair_cost
+        sum_of_EAFFB_with_critical_nodes_repair_hours += eaffb_with_critical_nodes_repair_hours
+
+        # EAFFB with critical nodes with realistic_traffic
+        eaffb_with_critical_nodes_realistic_traffic_result, eaffb_with_critical_nodes_realistic_traffic_laying_cost, eaffb_with_critical_nodes_realistic_traffic_repair_cost, eaffb_with_critical_nodes_realistic_traffic_repair_hours = EAFFB_with_critical_nodes(nodes, g, realistic_traffic, critical_regions, original_shortest_paths_avoid_critical_links_and_nodes, critical_nodes)
+        sum_of_EAFFB_with_critical_nodes_realistic_traffic += eaffb_with_critical_nodes_realistic_traffic_result
+        sum_of_EAFFB_with_critical_nodes_realistic_traffic_laying_cost += eaffb_with_critical_nodes_realistic_traffic_laying_cost
+        sum_of_EAFFB_with_critical_nodes_realistic_traffic_repair_cost += eaffb_with_critical_nodes_realistic_traffic_repair_cost
+        sum_of_EAFFB_with_critical_nodes_realistic_traffic_repair_hours += eaffb_with_critical_nodes_realistic_traffic_repair_hours
+        # ////////////////////////////////////////////
+
+        # ////////////////////////////////////////////
+        # EAFFB with critical nodes and fire and flood disasters logic
+        eaffb_with_critical_nodes_and_fire_and_flood_disasters_result, eaffb_with_critical_nodes_and_fire_and_flood_disasters_laying_cost, eaffb_with_critical_nodes_and_fire_and_flood_disasters_repair_cos, eaffb_with_critical_nodes_and_fire_and_flood_disasters_repair_hours = EAFFB_with_critical_nodes_and_fire_and_flood_disasters(nodes, g, traffic, critical_regions, original_shortest_paths_avoid_critical_links, critical_nodes, critical_regions_fire, critical_regions_flood)
+        sum_of_EAFFB_with_critical_nodes_and_fire_and_flood_disasters += eaffb_with_critical_nodes_and_fire_and_flood_disasters_result
+        sum_of_EAFFB_with_critical_nodes_and_fire_and_flood_disasters_laying_cost += eaffb_with_critical_nodes_and_fire_and_flood_disasters_laying_cost
+        sum_of_EAFFB_with_critical_nodes_and_fire_and_flood_disasters_repair_cost += eaffb_with_critical_nodes_and_fire_and_flood_disasters_repair_cos
+        sum_of_EAFFB_with_critical_nodes_and_fire_and_flood_disasters_repair_hours += eaffb_with_critical_nodes_and_fire_and_flood_disasters_repair_hours
+
+        # EAFFB with critical nodes and fire and flood disasters logic
+        eaffb_with_critical_nodes_and_fire_and_flood_disasters_realistic_traffic_result, eaffb_with_critical_nodes_and_fire_and_flood_disasters_realistic_traffic_laying_cost, eaffb_with_critical_nodes_and_fire_and_flood_disasters_realistic_traffic_repair_cost, eaffb_with_critical_nodes_and_fire_and_flood_disasters_realistic_traffic_repair_hours = EAFFB_with_critical_nodes_and_fire_and_flood_disasters(nodes, g, realistic_traffic, critical_regions, original_shortest_paths_avoid_critical_links, critical_nodes,critical_regions_fire, critical_regions_flood)
+        sum_of_EAFFB_with_critical_nodes_and_fire_and_flood_disasters_realistic_traffic += eaffb_with_critical_nodes_and_fire_and_flood_disasters_realistic_traffic_result
+        sum_of_EAFFB_with_critical_nodes_and_fire_and_flood_disasters_realistic_traffic_laying_cost += eaffb_with_critical_nodes_and_fire_and_flood_disasters_realistic_traffic_laying_cost
+        sum_of_EAFFB_with_critical_nodes_and_fire_and_flood_disasters_realistic_traffic_repair_cost += eaffb_with_critical_nodes_and_fire_and_flood_disasters_realistic_traffic_repair_cost
+        sum_of_EAFFB_with_critical_nodes_and_fire_and_flood_disasters_realistic_traffic_repair_hours += eaffb_with_critical_nodes_and_fire_and_flood_disasters_realistic_traffic_repair_hours
+        # ////////////////////////////////////////////
+
+    print("========== EAFFB2 vs EAFFB vs Proposed ==========")
     print(f"EAFFB : {sum_of_EAFFB / test_times}")
+    print(f"EAFFB realistic_traffic : {sum_of_EAFFB_realistic_traffic / test_times}")
+    print(f"EAFFB vs EAFFB realistic_traffic: {perCalc(sum_of_EAFFB, sum_of_EAFFB_realistic_traffic, test_times)}% lower energy")
     print(f"Proposed algorithm on paper: {sum_of_proposed_alg / test_times}")
+    print(f"Proposed algorithm on paper realistic_traffic: {sum_of_proposed_alg_realistic_traffic / test_times}")
+    print(f"Proposed algorithm on pape vs Proposed algorithm on pape realistic_traffic: {perCalc(sum_of_proposed_alg, sum_of_proposed_alg_realistic_traffic, test_times)}% lower energy")
     print(f"EAFFB with new shortest path calculation scheme : {sum_of_EAFFB2 / test_times}")
+    print(f"EAFFB with new shortest path calculation scheme laying_cost: {sum_of_EAFFB2_laying_cost / test_times}")
+    print(f"EAFFB with new shortest path calculation scheme repair_cost: {sum_of_EAFFB2_repair_cost / test_times}")
+    print(f"EAFFB with new shortest path calculation scheme repair_hours: {sum_of_EAFFB2_repair_hours / test_times}")
+
+    print(f"EAFFB with new shortest path calculation scheme realistic_traffic: {sum_of_EAFFB2_realistic_traffic / test_times}")
+    print(f"EAFFB with new shortest path calculation scheme realistic_traffic laying_cost: {sum_of_EAFFB2_realistic_traffic_laying_cost / test_times}")
+    print(f"EAFFB with new shortest path calculation scheme realistic_traffic repair_cost: {sum_of_EAFFB2_realistic_traffic_repair_cost / test_times}")
+    print(f"EAFFB with new shortest path calculation scheme realistic_traffic repair_hours: {sum_of_EAFFB2_realistic_traffic_repair_hours / test_times}")
+
+    print(f"EAFFB with new shortest path calculation scheme vs EAFFB with new shortest path calculation scheme realistic_traffic: {perCalc(sum_of_EAFFB2, sum_of_EAFFB2_realistic_traffic, test_times)}% lower energy")
     print(f"EAFFB2 vs EAFFB: {perCalc(sum_of_EAFFB, sum_of_EAFFB2, test_times)}% lower energy")
     print(f"EAFFB2 vs Proposed: {perCalc(sum_of_proposed_alg, sum_of_EAFFB2, test_times)}% lower energy")
+
+
+    print("========== EAFFB with critical nodes logic vs EAFFB vs Proposed ==========")
+    print(f"EAFFB : {sum_of_EAFFB / test_times}")
+    print(f"EAFFB realistic_traffic : {sum_of_EAFFB_realistic_traffic / test_times}")
+    print(f"EAFFB vs EAFFB realistic_traffic: {perCalc(sum_of_EAFFB, sum_of_EAFFB_realistic_traffic, test_times)}% lower energy")
+    print(f"Proposed algorithm on paper: {sum_of_proposed_alg / test_times}")
+    print(f"Proposed algorithm on paper realistic_traffic: {sum_of_proposed_alg_realistic_traffic / test_times}")
+    print(f"Proposed algorithm on pape vs Proposed algorithm on pape realistic_traffic: {perCalc(sum_of_proposed_alg, sum_of_proposed_alg_realistic_traffic, test_times)}% lower energy")
+    print(f"EAFFB with critical nodes logic : {sum_of_EAFFB_with_critical_nodes / test_times}")
+    print(f"EAFFB with critical nodes logic laying_cost: {sum_of_EAFFB_with_critical_nodes_laying_cost / test_times}")
+    print(f"EAFFB with critical nodes logic repair_cost: {sum_of_EAFFB_with_critical_nodes_repair_cost / test_times}")
+    print(f"EAFFB with critical nodes logic repair_hours: {sum_of_EAFFB_with_critical_nodes_repair_hours / test_times}")
+
+    print(f"EAFFB with critical nodes logic realistic_traffic: {sum_of_EAFFB_with_critical_nodes_realistic_traffic / test_times}")
+    print(f"EAFFB with critical nodes logic realistic_traffic laying_cost: {sum_of_EAFFB_with_critical_nodes_realistic_traffic_laying_cost / test_times}")
+    print(f"EAFFB with critical nodes logic realistic_traffic repair_cost: {sum_of_EAFFB_with_critical_nodes_realistic_traffic_repair_cost / test_times}")
+    print(f"EAFFB with critical nodes logic realistic_traffic repair_hours: {sum_of_EAFFB_with_critical_nodes_realistic_traffic_repair_hours / test_times}")
+
+    print(f"EAFFB with critical nodes logic vs EAFFB with critical nodes logic realistic_traffic: {perCalc(sum_of_EAFFB_with_critical_nodes, sum_of_EAFFB_with_critical_nodes_realistic_traffic, test_times)}% lower energy")
+    print(f"EAFFB with critical nodes logic vs EAFFB: {perCalc(sum_of_EAFFB, sum_of_EAFFB_with_critical_nodes, test_times)}% lower energy")
+    print(f"EAFFB with critical nodes logic vs Proposed: {perCalc(sum_of_proposed_alg, sum_of_EAFFB_with_critical_nodes, test_times)}% lower energy")
+
+
+    print("========== EAFFB with critical nodes and fire and flood disasters logic vs EAFFB vs Proposed ==========")
+    print(f"EAFFB : {sum_of_EAFFB / test_times}")
+    print(f"EAFFB realistic_traffic : {sum_of_EAFFB_realistic_traffic / test_times}")
+    print(f"EAFFB vs EAFFB realistic_traffic: {perCalc(sum_of_EAFFB, sum_of_EAFFB_realistic_traffic, test_times)}% lower energy")
+    print(f"Proposed algorithm on paper: {sum_of_proposed_alg / test_times}")
+    print(f"Proposed algorithm on paper realistic_traffic: {sum_of_proposed_alg_realistic_traffic / test_times}")
+    print(f"Proposed algorithm on pape vs Proposed algorithm on pape realistic_traffic: {perCalc(sum_of_proposed_alg, sum_of_proposed_alg_realistic_traffic, test_times)}% lower energy")
+    print(f"EAFFB with critical nodes and fire and flood disasters logic : {sum_of_EAFFB_with_critical_nodes_and_fire_and_flood_disasters / test_times}")
+    print(f"EAFFB with critical nodes and fire and flood disasters logic laying_cost: {sum_of_EAFFB_with_critical_nodes_and_fire_and_flood_disasters_laying_cost / test_times}")
+    print(f"EAFFB with critical nodes and fire and flood disasters logic repair_cost: {sum_of_EAFFB_with_critical_nodes_and_fire_and_flood_disasters_repair_cost / test_times}")
+    print(f"EAFFB with critical nodes and fire and flood disasters logic repair_hours: {sum_of_EAFFB_with_critical_nodes_and_fire_and_flood_disasters_repair_hours / test_times}")
+
+    print(f"EAFFB with critical nodes and fire and flood disasters logic realistic_traffic: {sum_of_EAFFB_with_critical_nodes_and_fire_and_flood_disasters_realistic_traffic / test_times}")
+    print(f"EAFFB with critical nodes and fire and flood disasters logic realistic_traffic laying_cost: {sum_of_EAFFB_with_critical_nodes_and_fire_and_flood_disasters_realistic_traffic_laying_cost / test_times}")
+    print(f"EAFFB with critical nodes and fire and flood disasters logic realistic_traffic repair_cost: {sum_of_EAFFB_with_critical_nodes_and_fire_and_flood_disasters_realistic_traffic_repair_cost / test_times}")
+    print(f"EAFFB with critical nodes and fire and flood disasters logic realistic_traffic repair_hours: {sum_of_EAFFB_with_critical_nodes_and_fire_and_flood_disasters_realistic_traffic_repair_hours / test_times}")
+
+    print(f"EAFFB with critical nodes and fire and flood disasters logic vs EAFFB with critical nodes and fire and flood disasters logic realistic_traffic: {perCalc(sum_of_EAFFB_with_critical_nodes_and_fire_and_flood_disasters, sum_of_EAFFB_with_critical_nodes_and_fire_and_flood_disasters_realistic_traffic, test_times)}% lower energy")
+    print(f"EAFFB with critical nodes and fire and flood disasters logic vs EAFFB: {perCalc(sum_of_EAFFB, sum_of_EAFFB_with_critical_nodes_and_fire_and_flood_disasters, test_times)}% lower energy")
+    print(f"EAFFB with critical nodes and fire and flood disasters logic vs Proposed: {perCalc(sum_of_proposed_alg, sum_of_EAFFB_with_critical_nodes_and_fire_and_flood_disasters, test_times)}% lower energy")
 
 
     # print(f"Proposed algorithm: {sum_of_proposed_alg / test_times}")

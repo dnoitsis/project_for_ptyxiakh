@@ -231,7 +231,7 @@ def perCalc(sum_of_original_power, sum_of_result, test_times):
     return per * 100
 
 
-def createTrafficMatrix3(nodes_pop, scale=1.0, noise=True, self_traffic_factor=0.2):
+def createRealisticTrafficMatrix(nodes_pop, scale=1.0, noise=True, self_traffic_factor=0.2):
     """
     Create a traffic matrix based on population sizes.
     - Traffic between nodes: proportional to pop_i * pop_j
