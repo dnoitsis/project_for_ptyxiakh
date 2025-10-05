@@ -48,6 +48,8 @@ def EAFFB2(nodes, g, traffic, critical_regions, original_shortest_paths):
                 for link in new_path[1]:
                     backup_links.append(link)
 
+    print("eaffb2 backup_paths_for_critical_regions size: " + str(len(backup_paths_for_critical_regions)))
+
     shortestPaths += backup_paths_for_critical_regions
 
     # Calculating the average hops.

@@ -177,6 +177,8 @@ def EAFFB(nodes, links, g, traffic, regions, lowerThresholdValue):
 
                     new_shortestPaths.append(new_path)
 
+    print("proposed backup_paths_for_critical_regions size: " + str(len(new_shortestPaths)))
+
     shortestPaths += new_shortestPaths
 
     # Calculating the average hops.
@@ -247,7 +249,9 @@ def proposedAlgorithm(nodes, links, g, traffic, regions, lowerThresholdValue):
             powers_dict[result] = combination
 
     powers.sort()
+    print("////////////////////////")
     result, num_rooters, num_tran, num_edfa = EAFFB(nodes, new_links(powers_dict[powers[0]], links), new_g(powers_dict[powers[0]], g), traffic, regions, lowerThresholdValue)
+    print("////////////////////////")
     original_power, original_num_rooters, original_num_tran, original_num_edfa = EAFFB(nodes, links, g, traffic, regions, lowerThresholdValue)
     return result, original_power, num_rooters, num_tran, num_edfa, original_num_rooters, original_num_tran, original_num_edfa
 
